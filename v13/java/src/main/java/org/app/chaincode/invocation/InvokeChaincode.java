@@ -27,47 +27,43 @@ public class InvokeChaincode {
 
     private static FabricClient fabClient_invoke;
     private static ChannelClient channelClient_invoke;
-    static boolean init_judge = true;
 
-    public void invokeInit(JSONObject configJson){
+    // 初始化配置信息
+    public void initInvoke(String eroll_name, String eroll_address){
         try {
             Util.cleanUp();
-            String caUrl = configJson.getString("caUrl");
+            String caUrl = Config.CA_ORG1_URL;
             CAClient caClient = new CAClient(caUrl, null);
             // Enroll Admin to Org1MSP
             UserContext adminUserContext = new UserContext();
-            adminUserContext.setName(configJson.getString("Admin"));
+            adminUserContext.setName(Config.ADMIN);
             adminUserContext.setAffiliation(Config.ORG1);
             adminUserContext.setMspId(Config.ORG1_MSP);
             caClient.setAdminUserContext(adminUserContext);
-            adminUserContext = caClient.enrollAdminUser(configJson.getString("Admin"), configJson.getString("Adminpw"));
+            adminUserContext = caClient.enrollAdminUser(Config.ADMIN,Config.ADMIN_PASSWORD);
 
             fabClient_invoke = new FabricClient(adminUserContext);
 
             channelClient_invoke = fabClient_invoke.createChannelClient(Config.CHANNEL_NAME);
             Channel channel = channelClient_invoke.getChannel();
-            Peer peer = fabClient_invoke.getInstance().newPeer(configJson.getString("Eroll_Name"), configJson.getString("Eroll_Address"));
-            Orderer orderer = fabClient_invoke.getInstance().newOrderer(configJson.getString("Orderer_Name"), configJson.getString("Orderer_Address"));
+            Peer peer = fabClient_invoke.getInstance().newPeer(eroll_name, eroll_address);
+            Orderer orderer = fabClient_invoke.getInstance().newOrderer(Config.ORDERER_NAME, Config.ORDERER_URL);
             channel.addPeer(peer);
             channel.addOrderer(orderer);
             channel.initialize();
-
-            init_judge = false;
-
+            Logger.getLogger(InvokeChaincode.class.getName()).log(Level.INFO, "准备添加数据...");
         } catch (Exception e) {
+            System.out.println("配置信息初始化失败...");
             e.printStackTrace();
         }
     }
-
-    public void invoke(JSONObject configJson, String fcn, JSONObject dataJson){
+    // 添加数据
+    public void invoke(JSONObject dataJson){
         try {
-            if(init_judge) {
-                invokeInit(configJson);
-            }
             TransactionProposalRequest request = fabClient_invoke.getInstance().newTransactionProposalRequest();
             ChaincodeID ccid = ChaincodeID.newBuilder().setName(Config.CHAINCODE_1_NAME).build();
             request.setChaincodeID(ccid);
-            request.setFcn(fcn);
+            request.setFcn("initIdentity");
             String[] arguments = new String[4];
             arguments[0] = dataJson.getString("identifier");
             arguments[1] = dataJson.getString("syn_data");
@@ -85,32 +81,40 @@ public class InvokeChaincode {
             Collection<ProposalResponse> responses = channelClient_invoke.sendTransactionProposal(request);
             for (ProposalResponse res: responses) {
                 ChaincodeResponse.Status status = res.getStatus();
-                Logger.getLogger(InvokeChaincode.class.getName()).log(Level.INFO,"Invoked initIdentity on "+Config.CHAINCODE_1_NAME + ". Status - " + status);
+                Logger.getLogger(InvokeChaincode.class.getName()).log(Level.INFO, "【系统提示】添加数据 - " + status);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-//    public static void main(String[] args) throws JSONException {
-//
+    public static void main(String[] args) throws JSONException {
+
 //        JSONObject configJson = new JSONObject();
-//        configJson.put("caUrl","http://10.108.151.51:7054");
+//        configJson.put("caUrl","http://localhost:7054");
 //        configJson.put("Admin","admin");
 //        configJson.put("Adminpw","adminpw");
 //        configJson.put("Eroll_Name","peer0.org1.example.com");
-//        configJson.put("Eroll_Address","grpc://10.108.151.51:7051");
+//        configJson.put("Eroll_Address","grpc://localhost:7051");
 //        configJson.put("Orderer_Name","orderer.example.com");
-//        configJson.put("Orderer_Address","grpc://10.108.151.51:7050");
-//
-//
-//        JSONObject dataJson = new JSONObject();
-//        dataJson.put("identifier", "bupt");
-//        dataJson.put("syn_data", "10.20.30.40");
-//        dataJson.put("id_type", "dns");
-//        dataJson.put("root_id", "10");
-//
-//        new InvokeChaincode().invoke(configJson, "initIdentity", dataJson);
-//    }
+//        configJson.put("Orderer_Address","grpc://localhost:7050");
+
+        JSONObject dataJson = new JSONObject();
+        dataJson.put("identifier", "bupt");
+        dataJson.put("syn_data", "10.20.30.40");
+        dataJson.put("id_type", "dns");
+        dataJson.put("root_id", "10");
+
+        JSONObject dataJson1 = new JSONObject();
+        dataJson1.put("identifier", "fnl");
+        dataJson1.put("syn_data", "9.8.7.6");
+        dataJson1.put("id_type", "handle");
+        dataJson1.put("root_id", "22");
+
+        InvokeChaincode invokeChaincode = new InvokeChaincode();
+        invokeChaincode.initInvoke("entry0", "grpc://localhost:7051");
+        invokeChaincode.invoke(dataJson);
+        invokeChaincode.invoke(dataJson1);
+    }
 
     /*
     配置信息：configJson

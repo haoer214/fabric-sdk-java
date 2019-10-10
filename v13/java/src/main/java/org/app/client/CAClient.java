@@ -97,12 +97,12 @@ public class CAClient {
 	public UserContext enrollAdminUser(String username, String password) throws Exception {
 		UserContext userContext = Util.readUserContext(adminContext.getAffiliation(), username);
 		if (userContext != null) {
-			Logger.getLogger(CAClient.class.getName()).log(Level.WARNING, "CA -" + caUrl + " admin is already enrolled.");
+//			Logger.getLogger(CAClient.class.getName()).log(Level.WARNING, "CA -" + caUrl + " admin is already enrolled.");
 			return userContext;
 		}
 		Enrollment adminEnrollment = instance.enroll(username, password);
 		adminContext.setEnrollment(adminEnrollment);
-		Logger.getLogger(CAClient.class.getName()).log(Level.INFO, "CA -" + caUrl + " Enrolled Admin.");
+//		Logger.getLogger(CAClient.class.getName()).log(Level.INFO, "CA -" + caUrl + " Enrolled Admin.");
 		Util.writeUserContext(adminContext);
 		return adminContext;
 	}

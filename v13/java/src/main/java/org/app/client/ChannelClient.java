@@ -113,20 +113,20 @@ public class ChannelClient {
 	 */
 	public Collection<ProposalResponse> sendTransactionProposal(TransactionProposalRequest request)
 			throws ProposalException, InvalidArgumentException {
-		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
-				"Sending transaction proposal on channel " + channel.getName());
+//		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
+//				"Sending transaction proposal on channel " + channel.getName());
 
 		Collection<ProposalResponse> response = channel.sendTransactionProposal(request, channel.getPeers());
 		for (ProposalResponse pres : response) {
 			String stringResponse = new String(pres.getChaincodeActionResponsePayload());
-			Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
-					"Transaction proposal on channel " + channel.getName() + " " + pres.getMessage() + " "
-							+ pres.getStatus() + " with transaction id:" + pres.getTransactionID());
-			Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,stringResponse);
+//			Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
+//					"Transaction proposal on channel " + channel.getName() + " " + pres.getMessage() + " "
+//							+ pres.getStatus() + " with transaction id:" + pres.getTransactionID());
+//			Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,stringResponse);
 		}
 
 		CompletableFuture<TransactionEvent> cf = channel.sendTransaction(response);
-		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,cf.toString());
+//		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,cf.toString());
 
 		return response;
 	}
@@ -151,18 +151,20 @@ public class ChannelClient {
 	public Collection<ProposalResponse> instantiateChainCode(String chaincodeName, String version, String chaincodePath,
 			String language, String functionName, String[] functionArgs, String policyPath)
 			throws InvalidArgumentException, ProposalException, ChaincodeEndorsementPolicyParseException, IOException {
-		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
-				"Instantiate proposal request " + chaincodeName + " on channel " + channel.getName()
-						+ " with Fabric client " + fabClient.getInstance().getUserContext().getMspId() + " "
-						+ fabClient.getInstance().getUserContext().getName());
+//		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
+//				"Instantiate proposal request " + chaincodeName + " on channel " + channel.getName()
+//						+ " with Fabric client " + fabClient.getInstance().getUserContext().getMspId() + " "
+//						+ fabClient.getInstance().getUserContext().getName());
 		InstantiateProposalRequest instantiateProposalRequest = fabClient.getInstance()
 				.newInstantiationProposalRequest();
 		instantiateProposalRequest.setProposalWaitTime(180000);
 		ChaincodeID.Builder chaincodeIDBuilder = ChaincodeID.newBuilder().setName(chaincodeName).setVersion(version)
 				.setPath(chaincodePath);
 		ChaincodeID ccid = chaincodeIDBuilder.build();
+//		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
+//				"Instantiating Chaincode ID " + chaincodeName + " on channel " + channel.getName());
 		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
-				"Instantiating Chaincode ID " + chaincodeName + " on channel " + channel.getName());
+				"正在实例化链码 " + chaincodeName + " ...");
 		instantiateProposalRequest.setChaincodeID(ccid);
 		if (language.equals(Type.GO_LANG.toString()))
 			instantiateProposalRequest.setChaincodeLanguage(Type.GO_LANG);
@@ -185,8 +187,8 @@ public class ChannelClient {
 		Collection<ProposalResponse> responses = channel.sendInstantiationProposal(instantiateProposalRequest);
 		CompletableFuture<TransactionEvent> cf = channel.sendTransaction(responses);
 		
-		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
-				"Chaincode " + chaincodeName + " on channel " + channel.getName() + " instantiation " + cf);
+//		Logger.getLogger(ChannelClient.class.getName()).log(Level.INFO,
+//				"Chaincode " + chaincodeName + " on channel " + channel.getName() + " instantiation " + cf);
 		return responses;
 	}
 

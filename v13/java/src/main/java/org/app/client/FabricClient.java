@@ -105,9 +105,11 @@ public class FabricClient {
 		ChaincodeID.Builder chaincodeIDBuilder = ChaincodeID.newBuilder().setName(chainCodeName).setVersion(version)
 				.setPath(chaincodePath);
 		ChaincodeID chaincodeID = chaincodeIDBuilder.build();
+//		Logger.getLogger(FabricClient.class.getName()).log(Level.INFO,
+//				"Deploying chaincode " + chainCodeName + " using Fabric client " + instance.getUserContext().getMspId()
+//						+ " " + instance.getUserContext().getName());
 		Logger.getLogger(FabricClient.class.getName()).log(Level.INFO,
-				"Deploying chaincode " + chainCodeName + " using Fabric client " + instance.getUserContext().getMspId()
-						+ " " + instance.getUserContext().getName());
+				"正在安装链码 " + chainCodeName + " ..." );
 		request.setChaincodeID(chaincodeID);
 		request.setUserContext(instance.getUserContext());
 		request.setChaincodeSourceLocation(new File(codepath));

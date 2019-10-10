@@ -99,7 +99,6 @@ public class Util {
 	/**
 	 * Create enrollment from key and certificate files.
 	 * 
-	 * @param folderPath
 	 * @param keyFileName
 	 * @param certFileName
 	 * @return
@@ -160,7 +159,7 @@ public class Util {
 	        }
 
 	        // either file or an empty directory
-	        Logger.getLogger(Util.class.getName()).log(Level.INFO, "Deleting - " + dir.getName());
+//	        Logger.getLogger(Util.class.getName()).log(Level.INFO, "Deleting - " + dir.getName());
 	        return dir.delete();
 	    }
 
