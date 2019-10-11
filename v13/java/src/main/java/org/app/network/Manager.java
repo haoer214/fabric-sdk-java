@@ -148,7 +148,7 @@ public class Manager {
             Collection peers = mychannel.getPeers();
             for (Object peer : peers) {
                 Peer pr = (Peer) peer;
-                Logger.getLogger(Manager.class.getName()).log(Level.INFO, pr.getName() + " 的地址是 " + pr.getUrl());
+                Logger.getLogger(Manager.class.getName()).log(Level.INFO, "-> " + pr.getName() + " 的地址是 " + pr.getUrl());
             }
         } catch (Exception e) {
             e.printStackTrace();
