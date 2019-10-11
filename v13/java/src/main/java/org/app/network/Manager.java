@@ -1,6 +1,5 @@
 package org.app.network;
 
-import org.app.chaincode.invocation.InvokeChaincode;
 import org.app.client.ChannelClient;
 import org.app.client.FabricClient;
 import org.app.config.Config;
@@ -30,14 +29,12 @@ public class Manager {
     private Channel mychannel;
 
     private Peer[] entrys;
-    private String[] entrys_name;
-    private String[] entrys_url;
 
     private Manager(JSONObject jsonObject) throws JSONException {
         // 读取Json信息
         JSONArray entryArr = jsonObject.getJSONArray("entry");
-        entrys_name = new String[entryArr.length()];
-        entrys_url = new String[entryArr.length()];
+        String[] entrys_name = new String[entryArr.length()];
+        String[] entrys_url = new String[entryArr.length()];
         for(int i = 0; i < entryArr.length(); i++){
             entrys_name[i] = "entry" + i;
             entrys_url[i] = "grpc://" + entryArr.getJSONObject(i).getString("ip") + ":" + entryArr.getJSONObject(i).getString("port");
@@ -158,23 +155,6 @@ public class Manager {
         }
     }
 
-    private void initCouchdb(){
-        // 初始化状态数据库
-        try {
-            Logger.getLogger(Manager.class.getName()).log(Level.INFO, "正在初始化状态数据库...");
-            InvokeChaincode invokeChaincode = new InvokeChaincode();
-            invokeChaincode.initInvoke(entrys_name[0],entrys_url[0]);
-            JSONObject initJson = new JSONObject();
-            initJson.put("identifier", "Init");
-            initJson.put("syn_data", "Init_data");
-            initJson.put("id_type", "xx");
-            initJson.put("root_id", "xx");
-            invokeChaincode.invoke(initJson);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public boolean isOver(){
         return true;
     }
@@ -210,7 +190,7 @@ public class Manager {
         jsonObject.put("entry",entryArray);
         jsonObject.put("peer",peerArray);
 
-        new Manager(jsonObject).initCouchdb();
+        new Manager(jsonObject);
 
     }
 }
