@@ -1,9 +1,0 @@
-
-InvokeChaincode中的JsonObject参数：
-
-    配置信息：configJson
-        包含："caUrl"、"Admin"、"Adminpw"、"Eroll_Name"、"Eroll_Address"、
-        "Orderer_Name"、"Orderer_Address" 共7个条目
-
-    数据信息：dataJson
-        包含："identifier"、"syn_data"、"id_type"、"root_id" 共4个条目
