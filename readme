@@ -1,71 +1,75 @@
+#################################
 
 #修改crypto-config、configtx文件:
-1个Orderer、1个Org、5个Peer、1个User
+改为1个Orderer、1个Org、5个Peer、1个User
 
 #修改build.sh脚本，重新生成证书:
 提前添加bin目录(包含二进制文件)，不然无法执行cryptogen、configtxgen命令；将生成的config、crypto-config目录放到network_resource里面(和docker-compose.yml指定的路径一致)
 
 #在docker-compose.yml里将ca证书换为新生成的:
 crypto-config/peerOrganizations/org1.example.com/ca/..._sk
-
 #在docker-compose.yml里新增节点配置:
 1个ca、1个orderer、5个peer(peer0—peer4)，修改名字和端口号
-
-#build.sh启动容器(1+1+5)
+以及5个couchdb，并添加相应的监控端口（如17051）
 
 #修改Config.java文件:
 将ORG2的配置注释掉；修改ORG1节点信息（注意端口号）
 
 #新建Manager类，合并main函数
-将创建通道、新增节点、链码安装和实例化通过函数调用
-
-#docker-compose文件增加couchdb，验证fabcar链码可用couchdb
+将创建通道、新增节点、链码安装和实例化通过一个类顺序执行
 
 #完成链码修改（基于marble）
 可安装并且实例化，链码名称为identity.go
-#java添加数据前端及功能实现
-通过按钮获取输入的数据（name,address,type),调用链码的initIdentity函数进行添加
-#java查询数据前端及功能实现
-通过名称name，查询数据（name,address,type),调用链码的quaryIdentityByName函数进行查询
+#java添加数据功能实现
+通过构造器初始化配置信息（configJson），调用invoke函数传入json数据（dataJson）,调用链码的initIdentity函数进行添加
+#java查询数据功能实现
+通过构造器初始化配置信息（configJson），调用query函数传入字符串（identifier）,调用链码的queryIdentityByName函数进行查询
+
+    /*
+    配置信息：configJson
+        包含："caUrl"、"Admin"、"Adminpw"、"Eroll_Name"、"Eroll_Address"、
+        "Orderer_Name"、"Orderer_Address" 共7个条目
+
+    数据信息：dataJson
+        包含："identifier"、"syn_data"、"id_type"、"root_id" 共4个条目
+    */
 
 #################################
 
 执行过程：
-1）进入v8/network目录，执行./build.sh建网（可用docker ps查看已生成的容器，包括5个peer,5个couchdb,1个orderer,1个ca）
-2）进入v8/java目录，输入mvn install命令（需安装maven），生成target目录，进入后将block-java-sdk-0.0.1-SNAPSHOT-jar-with-dependencies.jar文件复制到v8/network_resources目录下，可将其重命名为v8.jar
-3）进入v8/network_resources目录，执行java -cp v8.jar org.app.network.Manager命令，随即弹出图形界面，按顺序操作即可（节点数最多为5；链码实例化过程较长）
+1）进入v13/network目录，执行./build.sh建网（可用docker ps查看已生成的容器，包括5个peer,5个couchdb,1个orderer,1个ca）
+2）进入v13/java目录，输入mvn install命令（需安装maven），生成target目录，进入后将blockchain-java-sdk-0.0.1-SNAPSHOT-jar-with-dependencies.jar文件复制到v13/network_resources目录下，可将其重命名为v13.jar
+3）进入v13/network_resources目录，执行java -cp v13.jar org.app.network.Manager命令，可完成创建通道、加入节点、安装实例化链码等操作（链码实例化过程比较久）
+若不注释Manager的main函数，则默认将5个节点分为2个entry（部署了链码）、3个peer
+4）执行java -cp v13.jar org.app.network.chaincode.invocation.InvokeChaincode命令，可通过两entry节点添加数据
+若不注释InvokeChaincode的main函数，则默认用本机IP来配置，并自动添加两组数据
 
---单机部署
-# 基本配置：
-docker镜像（orderer、peer、ca等） 1.4.0
-1个org，1个orderer，1个ca，15个peer，15个couchdb
-
-# 建网流程：
-在v11/network/目录下执行./build.sh，成功后docker ps确认打开的容器数量
+#################################
 
 # java类说明
-v11/java/src/main/java/org/app/network/目录下的Manager类：
+
+① v13/java/src/main/java/org/app/network/目录下的Manager类：
 提供了一个构造器，接收一个jsonObject参数，其中包含两个jsonArray（分别对应entry、peer），每个jsonArray又包含多个jsonObject（对应每个节点），每个jsonObject包含ip、port两个属性
+
 --调用举例：
-import org.app.network.Manager	//导入Manager类
-public class main{
-	public static void main(String[] args) throws JSONException {
-		//自定义一个jsonObject对象（最外层），用于存放entrys、peers
-JSONObject jsonObject = new JSONObject();
+
+public static void main(String[] args) throws JSONException {
+//自定义一个jsonObject对象（最外层），用于存放entrys、peers
+	JSONObject jsonObject = new JSONObject();
  
 //自定义一个entryArray对象，用于存放所有的entry
-JSONArray entryArray = new JSONArray();
+	JSONArray entryArray = new JSONArray();
 //假设有2个entry，每个节点都是一个jsonObject对象，
 //其中包含ip、port两条属性
-       JSONObject entry0 = new JSONObject();	//entry0
-       entry0.put("ip", "localhost");
-       entry0.put("port", "7051");
-       JSONObject entry1 = new JSONObject();	//entry1
-       entry1.put("ip", "localhost");
-       entry1.put("port", "7056");
-		//把生成的2个entry加入entryArray
-       entryArray.put(entry0);
-       entryArray.put(entry1);
+      	JSONObject entry0 = new JSONObject();	//entry0
+       	entry0.put("ip", "localhost");
+       	entry0.put("port", "7051");
+       	JSONObject entry1 = new JSONObject();	//entry1
+    	entry1.put("ip", "localhost");
+       	entry1.put("port", "7056");
+//把生成的2个entry加入entryArray
+       	entryArray.put(entry0);
+       	entryArray.put(entry1);
 
 //自定义一个peerArray对象，用于存放所有的peer
        JSONArray peerArray = new JSONArray();
@@ -85,40 +89,58 @@ JSONArray entryArray = new JSONArray();
        peerArray.put(peer1);
        peerArray.put(peer2);
 
-		//最后把entryArray、peerArray加入最外层的jsonObject
+//最后把entryArray、peerArray加入最外层的jsonObject
        jsonObject.put("entry",entryArray);
        jsonObject.put("peer",peerArray);
 
-		//通过jsonObject调用函数构造器
+//通过jsonObject调用函数构造器
        Manager m = new Manager(jsonObject);
-		//执行结束，返回true
-		boolean b = m.isOver();
+
 }
-}
+
 --最终结果：创建通道—>加入2个entry—>安装/实例化链码—>再加入3个peer（只有entry可实现添加/查询数据功能，peer只是作为commit节点）
 
-v11/java/src/main/java/org/app/chaincode/invocation目录下的InvokeChaincode类：
-定义了两个函数。invokeInit()：用于初始化，仅在第一次添加数据时执行； invoke(String fcn, JSONObject jsonObject)：其中fcn对应链码中的initIdentity函数，jsonObject代表添加的对象（包含identifier、syn_data、id_type、root_id）。最后同步到数据库时会自动添加时间戳（invoke_time）
+
+② v13/java/src/main/java/org/app/chaincode/invocation目录下的InvokeChaincode类：
+构造器用于初始化配置信息（configJson）；定义了invoke(JSONObject jsonObject)函数：jsonObject代表添加的对象（包含identifier、syn_data、id_type、root_id）。最后同步到数据库时会自动添加时间戳（invoke_time）
+
 --调用举例：
-import org.app.chaincode.invocation.InvokeChaincode	//导入InvokeChaincode类
-public class main{
-	public static void main(String[] args) throws JSONException {
-		//自定义一个jsonObject对象，存放需添加的数据
-JSONObject jsonObject = new JSONObject();
-//其中包含identifier、syn_data、id_type、root_id四条属性
-jsonObject.put("identifier","bupt");
-jsonObject.put("syn_data","10.3.8.211");
-jsonObject.put("id_type ","handle");
-jsonObject.put("root_id","01");
 
-		InvokeChaincode invokeTest = new InvokeChaincode();
-		invokeTest. invoke(“initIdentity”, jsonObject)	//调用链码，写入数据
-}
-}
---最终结果：可以通过couchdb（地址是localhost:5984/_utils）查到该数据的所有信息，包括添加数据的时间（invoke_time）
+public static void main(String[] args) throws JSONException {
 
-v11/java/src/main/java/org/app/config/目录下的Config类：
-用于设置证书、通道配置文件、链码的路径，以及orderer和ca的ip和端口等，一般不用进行更改
+// 定义一个configJson，用于传入配制信息
+        JSONObject configJson = new JSONObject();
+        configJson.put("caUrl","http://localhost:7054");
+        configJson.put("Admin","admin");
+        configJson.put("Adminpw","adminpw");
+        configJson.put("Eroll_Name","peer0.org1.example.com");
+        configJson.put("Eroll_Address","grpc://localhost:7051");
+        configJson.put("Orderer_Name","orderer.example.com");
+        configJson.put("Orderer_Address","grpc://localhost:7050");
+
+//定义两个dataJson，作为要添加的数据
+        JSONObject dataJson = new JSONObject();
+        dataJson.put("identifier", "bupt");
+        dataJson.put("syn_data", "10.20.30.40");
+        dataJson.put("id_type", "dns");
+        dataJson.put("root_id", "10");
+
+        JSONObject dataJson1 = new JSONObject();
+        dataJson1.put("identifier", "fnl");
+        dataJson1.put("syn_data", "9.8.7.6");
+        dataJson1.put("id_type", "handle");
+        dataJson1.put("root_id", "22");
+
+        InvokeChaincode inv = new InvokeChaincode(configJson);
+        inv.invoke(dataJson);
+        inv.invoke(dataJson1);
+
+}
+
+--最终结果：可以通过couchdb（entry1的地址是localhost:17051/_utils）查到该数据的所有信息，包括添加数据的时间（invoke_time）
+
+③ v13/java/src/main/java/org/app/config/目录下的Config类：
+用于设置证书、通道配置文件、链码的路径，以及orderer和ca的ip和端口等，可根据需要对ip和端口进行修改
 
 # 其他
-v11.jar包在v11/network_resources目录下
+v13.jar包必须放在v13/network_resources目录下（因为要调用该目录下的证书、链码）
